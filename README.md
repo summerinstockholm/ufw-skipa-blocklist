@@ -85,8 +85,8 @@ sudo sed -n '1,200p' /etc/nftables.conf 2>/dev/null
 ### Шаг 1. Клонировать репозиторий
 
 ```bash
-git clone <git@github.com:summerinstockholm/ufw-skipa-blocklist.git>
-cd <ufw-skipa-blocklist>
+git clone git@github.com:summerinstockholm/ufw-skipa-blocklist.git
+cd ufw-skipa-blocklist
 ```
 
 ### Шаг 2. Запустить installer
