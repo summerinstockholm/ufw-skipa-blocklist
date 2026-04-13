@@ -1,6 +1,6 @@
 # SKIPA UFW blocklist for Ubuntu 24.04
 
-Этот репозиторий защищает Ubuntu 24.04 сервер от IP-адресов и подсетей из проекта [CyberOK_Skipa_ips](https://github.com/tread-lightly/CyberOK_Skipa_ips/tree/main).
+Этот репозиторий защищает Ubuntu 24.04 сервер от IP-адресов и подсетей из проекта [CyberOK_Skipa_ips](https://github.com/tread-lightly/CyberOK_Skipa_ips/tree/main). Такие дела.
 
 ## Структура репозитория
 
@@ -224,7 +224,7 @@ sudo systemctl daemon-reload
 
 Самый простой путь — восстановить backup, который делал installer или updater.
 
-Если backup не нужен и хочешь убрать только managed-блок:
+Если backup не нужен и хочется убрать только managed-блок:
 
 ```bash
 sudo python3 - <<'PY'
