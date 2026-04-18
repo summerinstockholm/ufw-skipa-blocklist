@@ -1,6 +1,6 @@
 # SKIPA UFW blocklist for Ubuntu 24.04
 
-Этот репозиторий защищает Ubuntu 24.04 сервер от IP-адресов и подсетей из проекта [CyberOK_Skipa_ips](https://github.com/tread-lightly/CyberOK_Skipa_ips/tree/main). Такие дела.
+Этот репозиторий защищает Ubuntu 24.04 сервер от IP-адресов и подсетей из проекта [CyberOK_Skipa_ips](https://github.com/tread-lightly/CyberOK_Skipa_ips/tree/main).
 
 ## Структура репозитория
 
@@ -21,7 +21,7 @@
 
 Скрипты делают следующее:
 
-- скачивают актуальный `skipa_cidr.txt` из исходного репозитория проекта [CyberOK_Skipa_ips](https://github.com/tread-lightly/CyberOK_Skipa_ips/tree/main);
+- скачивают актуальный `skipa_cidr.txt` из исходного репозитория;
 - валидируют IPv4/CIDR;
 - ведут блоклист как **управляемый блок** внутри `/etc/ufw/before.rules`;
 - вставляют этот блок **в начало `*filter`-секции**, то есть **раньше стандартных UFW-правил**, включая стандартные ICMP accept;
@@ -86,13 +86,7 @@ Status: active
 sudo ufw enable
 ```
 
-### Проверить возможный конфликт с native nftables
-
-Этот репозиторий рассчитан только на **UFW-only** сценарий.
-
-Если `nftables.service` включён (`enabled`) или активен (`active`), `install-skipa-banlist.sh` и `update-skipa-banlist.sh` **завершатся с ошибкой** и не будут вносить изменения.
-
-Причина простая: репозиторий не рассчитан на параллельную работу с отдельным standalone `nftables.service`.
+### Проверить конфликт с standalone nftables
 
 ```bash
 sudo systemctl is-enabled nftables.service
@@ -100,7 +94,11 @@ sudo systemctl is-active nftables.service
 sudo sed -n '1,200p' /etc/nftables.conf 2>/dev/null
 ```
 
-Если `nftables.service` включён или активен, сначала разберись с этим конфликтом. Этот репозиторий не должен работать параллельно с отдельным native `nftables`-контуром.
+Этот репозиторий рассчитан только на **UFW-only** сценарий.
+
+Если `nftables.service` включён (`enabled`) или активен (`active`), `install-skipa-banlist.sh` и `update-skipa-banlist.sh` **завершатся с ошибкой** и не будут вносить изменения.
+
+Причина простая: репозиторий не рассчитан на параллельную работу с отдельным standalone `nftables.service`.
 
 ## Установка
 
@@ -181,12 +179,6 @@ sudo sed -n '/BEGIN SKIPA BLOCKLIST/,/END SKIPA BLOCKLIST/p' /etc/ufw/before.rul
 
 ```bash
 sudo ufw show raw
-```
-
-### Проверить только строки с блоклистом в raw rules
-
-```bash
-sudo ufw show raw | grep -E 'ufw-before-(input|output|forward).*SKIPA|ufw-before-(input|output|forward)'
 ```
 
 ## Обновление вручную

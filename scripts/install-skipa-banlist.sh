@@ -4,28 +4,38 @@ set -euo pipefail
 
 # Определяем каталог, в котором лежит текущий installer-скрипт.
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 # Определяем корневой каталог репозитория как каталог уровнем выше папки scripts.
 REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+
 # Определяем путь к updater-скрипту внутри репозитория.
 LOCAL_UPDATE_SCRIPT="${REPO_ROOT}/scripts/update-skipa-banlist.sh"
+
 # Определяем путь к service unit внутри репозитория.
 LOCAL_SERVICE_FILE="${REPO_ROOT}/systemd/skipa-banlist.service"
+
 # Определяем путь к timer unit внутри репозитория.
 LOCAL_TIMER_FILE="${REPO_ROOT}/systemd/skipa-banlist.timer"
+
 # Определяем путь установки updater-скрипта на целевом сервере.
 TARGET_UPDATE_SCRIPT="/usr/local/sbin/update-skipa-banlist.sh"
+
 # Определяем путь установки service unit на целевом сервере.
 TARGET_SERVICE_FILE="/etc/systemd/system/skipa-banlist.service"
+
 # Определяем путь установки timer unit на целевом сервере.
 TARGET_TIMER_FILE="/etc/systemd/system/skipa-banlist.timer"
+
 # Определяем путь к основному UFW before.rules файлу, который будем изменять.
 UFW_BEFORE_RULES="/etc/ufw/before.rules"
+
 # Определяем путь к файлу native nftables-конфига только для проверки конфликта.
 NFTABLES_CONF="/etc/nftables.conf"
+
 # Определяем имя unit-файла standalone nftables-сервиса для проверки конфликта.
 NFTABLES_SERVICE="nftables.service"
 
-# Проверяем, что installer запущен от root
+# Проверяем, что installer запущен от root, потому что дальше будут изменения в /etc и systemd.
 if [[ "${EUID}" -ne 0 ]]; then
   echo "ERROR: запускай installer от root или через sudo." >&2
   exit 1
@@ -49,8 +59,11 @@ if [[ ! -f "${LOCAL_TIMER_FILE}" ]]; then
   exit 1
 fi
 
-# Обновляем индекс пакетов apt перед установкой зависимостей. Устанавливаем ufw, curl и python3, если их ещё нет в системе.
-apt update && apt install -y ufw curl python3
+# Обновляем индекс пакетов apt перед установкой зависимостей.
+apt update
+
+# Устанавливаем ufw, curl и python3, если их ещё нет в системе.
+apt install -y ufw curl python3
 
 # Проверяем, что команда ufw доступна в PATH после установки пакета.
 if ! command -v ufw >/dev/null 2>&1; then
@@ -90,32 +103,23 @@ fi
 
 # Если standalone nftables service включён или активен, считаем это конфликтом и останавливаем установку.
 if [[ "${NFTABLES_ENABLED}" == "yes" || "${NFTABLES_ACTIVE}" == "yes" ]]; then
+  echo "ERROR: этот репозиторий рассчитан только на UFW-only сценарий." >&2
   echo "ERROR: обнаружен конфликт с standalone ${NFTABLES_SERVICE}." >&2
-
-  # Печатаем состояние unit-файла, чтобы было видно источник проблемы.
   echo "       is-enabled: ${NFTABLES_ENABLED}" >&2
-
-  # Печатаем состояние активности unit-файла.
   echo "       is-active : ${NFTABLES_ACTIVE}" >&2
 
-  # Если /etc/nftables.conf непустой, отдельно сообщаем об этом.
   if [[ "${NFTABLES_CONF_HAS_CONTENT}" == "yes" ]]; then
-    # Печатаем пояснение, что native nftables-конфиг тоже не пустой.
     echo "       /etc/nftables.conf содержит правила или другие осмысленные строки." >&2
   fi
 
-  # Печатаем инструкцию сначала разобраться с native nftables, а потом запускать installer.
-  echo "       Этот репозиторий рассчитан на UFW-only подход и не должен работать параллельно с standalone nftables.service." >&2
+  echo "ERROR: install-skipa-banlist.sh не будет вносить изменения в такой конфигурации." >&2
   exit 1
 fi
 
 # Если nftables.service не активен, но /etc/nftables.conf непустой, просто предупреждаем администратора.
 if [[ "${NFTABLES_CONF_HAS_CONTENT}" == "yes" ]]; then
-  # Печатаем warning, что файл есть и содержит данные, но сервис не активен.
-  echo "WARNING: /etc/nftables.conf содержит данные, но standalone nftables.service не активен и не включён." >&2
-
-  # Печатаем совет не включать native nftables параллельно с этим UFW-only решением.
-  echo "         Не включай standalone nftables.service параллельно с этим репозиторием." >&2
+  echo "WARNING: /etc/nftables.conf содержит данные, но standalone ${NFTABLES_SERVICE} не активен и не включён." >&2
+  echo "WARNING: не включай standalone ${NFTABLES_SERVICE} параллельно с этим репозиторием." >&2
 fi
 
 # Делаем резервную копию /etc/ufw/before.rules перед первой модификацией.
